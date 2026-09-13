@@ -1,52 +1,30 @@
 import streamlit as st
 from groq import Groq
-import datetime
 
-st.set_page_config(page_title="MALEK AI - Fabric QC Expert", page_icon="🧵", layout="wide")
+st.set_page_config(page_title="Malek AI", page_icon="👕")
+st.title("Malek AI - Fabric Expert 👕")
 
-VALID_CODES = ["RAHIM-2026", "MALEK-001", "ADMIN-777", "MALEK-TEX"]
+if "m" not in st.session_state:
+    st.session_state.m=[]
 
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-
-if not st.session_state.authenticated:
-    st.title("🏭 MALEK SPINNING MILLS - LOGIN")
-    code = st.text_input("Factory Access Code:", type="password")
-    if st.button("Login"):
-        if code in VALID_CODES:
-            st.session_state.authenticated = True
-            st.rerun()
-        else:
-            st.error("ভুল কোড!")
-    st.stop()
-
-client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-
-with st.sidebar:
-    st.title("🧵 MALEK AI")
-    if st.button("Logout"):
-        st.session_state.authenticated = False
-        st.rerun()
-
-st.title("🧵 MALEK AI - Fabric QC Expert")
-st.caption("AI Powered Fabric Defect Detection")
-
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-for msg in st.session_state.messages:
+for msg in st.session_state.m:
     with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+        st.write(msg["content"])
 
-if prompt := st.chat_input("Ask Malek AI anything..."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
+prompt=st.chat_input("Ask Malek AI...")
+
+if prompt:
+    st.session_state.m.append({"role":"user","content":prompt})
     with st.chat_message("user"):
-        st.markdown(prompt)
+        st.write(prompt)
+    try:
+        client=Groq(api_key=st.secrets["GROQ_API_KEY"])
+        res=client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[{"role":"system","content":"You are Malek AI fabric expert"}]+st.session_state.m)
+        ans=res.choices[0].message.content
+    except Exception as e:
+        ans=f"Error: {e}"
+    st.session_state.m.append({"role":"assistant","content":ans})
     with st.chat_message("assistant"):
-        completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "system", "content": "You are MALEK AI textile QC expert. Answer in Bangla mix."}, *st.session_state.messages],
-        )
-        response = completion.choices[0].message.content
-        st.markdown(response)
-        st.session_state.messages.append({"role": "assistant", "content": response})
+        st.write(ans)
