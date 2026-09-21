@@ -1,4 +1,4 @@
 streamlit
-pandas
-groq
-pillow
+Pillow
+numpy
+opencv-python-headless
